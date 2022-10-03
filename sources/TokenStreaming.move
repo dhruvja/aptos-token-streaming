@@ -53,6 +53,21 @@ module TokenStreaming::Streaming {
 
     }
 
+    public entry fun close_stream<CoinType>(sender: &signer, current_time: u64) acquires StreamInfo {
+
+        let sender_addr = signer::address_of(sender);
+
+        let stream_info = borrow_global_mut<StreamInfo<CoinType>>(sender_addr);
+        let amount_to_withdraw = ((current_time - stream_info.start_time)*stream_info.amount_per_second) - stream_info.withdraw_amount;  
+
+        let coin = coin::extract(&mut stream_info.coin_store, amount_to_withdraw);
+        coin::deposit<CoinType>(stream_info.receiver, coin);
+
+        let remaining_coins = coin::extract_all(&mut stream_info.coin_store);
+        coin::deposit<CoinType>(sender_addr, remaining_coins);
+
+    }
+
     #[test_only]
     struct FakeCoin {}
 
@@ -93,6 +108,16 @@ module TokenStreaming::Streaming {
 
         let withdraw_amount = (current_time - start_time)*amount_per_second;
         assert!(coin::balance<FakeCoin>(receiver_addr) == withdraw_amount, EINVALID_BALANCE);
+
+        current_time = 1150;
+
+        close_stream<FakeCoin>(&sender, current_time);
+
+        let receiver_balance = (current_time - start_time)*amount_per_second;
+        let sender_balance = (end_time - current_time)*amount_per_second;
+
+        assert!(coin::balance<FakeCoin>(sender_addr) == initial_mint_amount + sender_balance - deposit_amount, EINVALID_BALANCE);
+        assert!(coin::balance<FakeCoin>(receiver_addr) == receiver_balance, EINVALID_BALANCE); 
 
     }
 
