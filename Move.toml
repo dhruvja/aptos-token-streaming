@@ -1,0 +1,9 @@
+[package]
+name = 'token-streaming'
+version = '1.0.0'
+
+[addresses]
+TokenStreaming = "32966cd2059ab5df33ac1bb1d8094f082545157ee6328c3c027f756f703e80a0"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev="devnet"}
